@@ -207,22 +207,22 @@ class playerWindow ( wx.Frame ):
 
 import os
 import pydub
+import _thread
 from pydub.playback import play
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 
-class Player(playerWindow):
+class Player():
     
     def __init__(self):
-        playerWindow.__init__(self)
         self.target_media_file = None # Originally opened file in Python
         self.target_media_file_location = "" # File location in string
         self.target_file_type = "" # Recorded file extension
         self.playing_file = None # File for Pydub
         
     # Basic functions
-    def getFileExtension(target_file_location:str):
+    def getFileExtension(self, target_file_location:str):
         extensionName:str = ""
 		# For loop into every characters of the string
         fileExtensionStartLocation = target_file_location.find(".")
@@ -241,7 +241,12 @@ class Player(playerWindow):
         self.target_media_file = open(self.target_media_file_location, "rb")
         # Upload the file to Pydub
         if (uploadToPydub == True):
-            self.playing_file = pydub.AudioSegment.from_file(self.target_media_file)
+            self.playing_file = pydub.AudioSegment.from_file(self.target_media_file_location, format=self.target_file_type)
+        print("The target file has already opened")
+        print(self.target_media_file)
+        print(self.target_media_file_location)
+        print(self.target_file_type)
+        print(self.playing_file)
         
     def closeFile(self):
         "Close the target file in the class."
@@ -255,13 +260,15 @@ class Player(playerWindow):
         # Open the file with pydub
         play(self.playing_file)
         # Set the title to the file name
-        self.label_songTitle.SetLabel(os.path.basename(self.target_media_file_location))
+        # self.label_songTitle.SetLabel(os.path.basename(self.target_media_file_location))
+        print("The file is playing")
+        return
 
 
 class PageEvent(playerWindow):
     def __init__(self, parent):
         playerWindow.__init__(self, parent)
-        self.Player = Player
+        self.Player = Player() #Instantiate
         self.playQuene = []
         
     # Basic functions
@@ -277,29 +284,30 @@ class PageEvent(playerWindow):
             return
         
     def openMusicFile(self, event):
-        try:
-            fileLocation = filedialog.askopenfilename(filetypes=[("MP3 Media File", "*.mp3"), ("WAV Media File", "*.wav")])
-            fileExtention = self.Player.getFileExtension(fileLocation)
-            # Generate a metadata for songs in quene and add to the list
-            song_metadata = {
-				"name": os.path.basename(fileLocation),
-				"location": fileLocation
-			}
+        fileLocation = filedialog.askopenfilename(filetypes=[("MP3 Media File", "*.mp3"), ("WAV Media File", "*.wav")])
+        fileExtention = self.Player.getFileExtension(fileLocation)
+        # Generate a metadata for songs in quene and add to the list
+        song_metadata = {
+			"name": os.path.basename(fileLocation),
+			"location": fileLocation
+		}
             
-            # check whether this item has already appended into the quene
-            for i in self.playQuene:
-                if (i["name"] == song_metadata["name"]):
-                    result = messagebox.askyesno("Song has already existed", "The song you are going to append has already added to this quene. Do you want to continue?")
-                    if (result == True):
-                        break
-                    else:
-                        return
+        # check whether this item has already appended into the quene
+        for i in self.playQuene:
+            if (i["name"] == song_metadata["name"]):
+                result = messagebox.askyesno("Song has already existed", "The song you are going to append has already added to this quene. Do you want to continue?")
+                if (result == True):
+                    break
+                else:
+                    return
             
-            # add this metadata to the list
-            self.playQuene.append(song_metadata)
+        # add this metadata to the list
+        self.playQuene.append(song_metadata)
+        # try:
             
-        except:
-            messagebox.showerror("Open file error", "Mineatory cannot open the file that you specific.")
+            
+        # except:
+        #     messagebox.showerror("Open file error", "Mineatory cannot open the file that you specific.")
             
     def refreshQuene(self, event):
         self.list_playList.Clear()
@@ -338,7 +346,9 @@ class PageEvent(playerWindow):
         
         # Open the file
         self.Player.openFile(file_location=selected_song_location, uploadToPydub=True)
-        self.Player.playMusicFromFile()
+        # Create a thread to play music
+        player_thread_num = _thread.start_new_thread(self.Player.playMusicFromFile, ())
+        # self.Player.playMusicFromFile()
         
 if (__name__ == "__main__"):
     root = Tk()
