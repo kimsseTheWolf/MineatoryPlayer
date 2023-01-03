@@ -20,6 +20,7 @@ class playerWindow ( wx.Frame ):
 		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"MINEATORY PLAYER", pos = wx.DefaultPosition, size = wx.Size( 557,381 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+		self.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_HIGHLIGHTTEXT ) )
 
 		self.player_menubar = wx.MenuBar( 0 )
 		self.menu_file = wx.Menu()
@@ -103,10 +104,10 @@ class playerWindow ( wx.Frame ):
 		gSizer3 = wx.GridSizer( 0, 2, 0, 0 )
 
 		self.btn_addSong = wx.Button( self, wx.ID_ANY, u"Add songs...", wx.DefaultPosition, wx.DefaultSize, 0 )
-		gSizer3.Add( self.btn_addSong, 1, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, 5 )
+		gSizer3.Add( self.btn_addSong, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5 )
 
 		self.btn_deleteSong = wx.Button( self, wx.ID_ANY, u"Delete Selected", wx.DefaultPosition, wx.DefaultSize, 0 )
-		gSizer3.Add( self.btn_deleteSong, 1, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND, 5 )
+		gSizer3.Add( self.btn_deleteSong, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, 5 )
 
 
 		bSizer1.Add( gSizer3, 0, wx.EXPAND, 5 )
@@ -122,7 +123,7 @@ class playerWindow ( wx.Frame ):
 		self.label_songTitle = wx.StaticText( self, wx.ID_ANY, u"Not Playing Right now...", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL )
 		self.label_songTitle.Wrap( -1 )
 
-		self.label_songTitle.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.label_songTitle.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, wx.EmptyString ) )
 
 		btn_list_add.Add( self.label_songTitle, 0, wx.ALL|wx.EXPAND, 5 )
 
@@ -176,13 +177,30 @@ class playerWindow ( wx.Frame ):
 
 		self.Centre( wx.BOTH )
 
+		# Connect Events
+		self.Bind( wx.EVT_MENU, self.openAbout, id = self.menu_file_about.GetId() )
+
 	def __del__( self ):
 		pass
+	
+	# Virtual event handlers, override them in your derived class
+	def openAbout( self, event ):
+		event.Skip()
 
 
+import os
 class PageEvent(playerWindow):
     def __init__(self, parent):
         playerWindow.__init__(self, parent)
+        
+    def openAbout(self, event):
+        try:
+            os.system("python about.py")
+            return
+        except:
+            os.system("python3 about.py")
+            return
+        
 
 
 if (__name__ == "__main__"):
