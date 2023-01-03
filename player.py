@@ -180,6 +180,10 @@ class playerWindow ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_MENU, self.openAbout, id = self.menu_file_about.GetId() )
 		self.btn_addSong.Bind( wx.EVT_BUTTON, self.openMusicFile )
+		self.list_playList.Bind( wx.EVT_ENTER_WINDOW, self.refreshQuene )
+		self.btn_deleteSong.Bind( wx.EVT_BUTTON, self.deleteSelectedSong )
+		self.Bind( wx.EVT_MENU, self.openMusicFile, id = self.menu_file_open.GetId() )
+		self.list_playList.Bind( wx.EVT_LISTBOX_DCLICK, self.selectAndPlayFile )
   
 	def __del__( self ):
 		pass
@@ -190,6 +194,16 @@ class playerWindow ( wx.Frame ):
 
 	def openMusicFile( self, event ):
 		event.Skip()
+  
+	def refreshQuene( self, event ):
+		event.Skip()
+  
+	def deleteSelectedSong( self, event ):
+		event.Skip()
+  
+	def selectAndPlayFile( self, event ):
+		event.Skip()
+
 
 import os
 import pydub
@@ -198,9 +212,10 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 
-class Player():
+class Player(playerWindow):
     
     def __init__(self):
+        playerWindow.__init__(self)
         self.target_media_file = None # Originally opened file in Python
         self.target_media_file_location = "" # File location in string
         self.target_file_type = "" # Recorded file extension
@@ -239,12 +254,19 @@ class Player():
         "Start the play the music from the file in the class"
         # Open the file with pydub
         play(self.playing_file)
+        # Set the title to the file name
+        self.label_songTitle.SetLabel(os.path.basename(self.target_media_file_location))
 
 
 class PageEvent(playerWindow):
     def __init__(self, parent):
         playerWindow.__init__(self, parent)
         self.Player = Player
+        self.playQuene = []
+        
+    # Basic functions
+    def setPlayingTitle(self, title:str):
+        self.label_songTitle.SetLabel(title)
         
     def openAbout(self, event):
         try:
@@ -258,10 +280,66 @@ class PageEvent(playerWindow):
         try:
             fileLocation = filedialog.askopenfilename(filetypes=[("MP3 Media File", "*.mp3"), ("WAV Media File", "*.wav")])
             fileExtention = self.Player.getFileExtension(fileLocation)
-            messagebox.showinfo("File type test", fileLocation+"|"+fileExtention)
+            # Generate a metadata for songs in quene and add to the list
+            song_metadata = {
+				"name": os.path.basename(fileLocation),
+				"location": fileLocation
+			}
+            
+            # check whether this item has already appended into the quene
+            for i in self.playQuene:
+                if (i["name"] == song_metadata["name"]):
+                    result = messagebox.askyesno("Song has already existed", "The song you are going to append has already added to this quene. Do you want to continue?")
+                    if (result == True):
+                        break
+                    else:
+                        return
+            
+            # add this metadata to the list
+            self.playQuene.append(song_metadata)
+            
         except:
             messagebox.showerror("Open file error", "Mineatory cannot open the file that you specific.")
-
+            
+    def refreshQuene(self, event):
+        self.list_playList.Clear()
+        for i in self.playQuene:
+            self.list_playList.Append(i["name"])
+            
+    def deleteSelectedSong(self, event):
+        selected_song_name = self.list_playList.GetStringSelection()
+        print(selected_song_name)
+        # Identify whether there is a selection from the user
+        if (selected_song_name == "" or selected_song_name == None):
+            messagebox.showwarning("Select a song to continue...", "Please select a song to continue removing.")
+            return
+        # index the quene and delete the one match the name ONCE
+        for i in self.playQuene:
+            if (i["name"] == selected_song_name):
+                # find the index of the value
+                target_index = self.playQuene.index(i)
+                self.playQuene.pop(target_index)
+                break
+            else:
+                continue
+    
+    def selectAndPlayFile(self, event):
+        # Gather the selection from the list
+        selected_song_name = self.list_playList.GetStringSelection()
+        
+        # Find the file location of that target file and open
+        selected_song_location = ""
+        for i in self.playQuene:
+            if (i["name"] == selected_song_name):
+                selected_song_location = i["location"]
+                break
+            else:
+                continue
+        
+        # Open the file
+        self.Player.openFile(file_location=selected_song_location, uploadToPydub=True)
+        self.Player.playMusicFromFile()
+        
 if (__name__ == "__main__"):
     root = Tk()
     root.withdraw()

@@ -107,6 +107,7 @@
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
                         <property name="unchecked_bitmap"></property>
+                        <event name="OnMenuSelection">openMusicFile</event>
                     </object>
                     <object class="separator" expanded="0">
                         <property name="name">m_separator1</property>
@@ -440,6 +441,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style"></property>
+                                <event name="OnEnterWindow">refreshQuene</event>
                             </object>
                         </object>
                         <object class="sizeritem" expanded="0">
@@ -599,6 +601,7 @@
                                         <property name="window_extra_style"></property>
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
+                                        <event name="OnButtonClick">deleteSelectedSong</event>
                                     </object>
                                 </object>
                             </object>
