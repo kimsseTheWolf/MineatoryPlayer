@@ -179,7 +179,8 @@ class playerWindow ( wx.Frame ):
 
 		# Connect Events
 		self.Bind( wx.EVT_MENU, self.openAbout, id = self.menu_file_about.GetId() )
-
+		self.btn_addSong.Bind( wx.EVT_BUTTON, self.openMusicFile )
+  
 	def __del__( self ):
 		pass
 	
@@ -187,11 +188,63 @@ class playerWindow ( wx.Frame ):
 	def openAbout( self, event ):
 		event.Skip()
 
+	def openMusicFile( self, event ):
+		event.Skip()
 
 import os
+import pydub
+from pydub.playback import play
+from tkinter import *
+from tkinter import filedialog
+from tkinter import messagebox
+
+class Player():
+    
+    def __init__(self):
+        self.target_media_file = None # Originally opened file in Python
+        self.target_media_file_location = "" # File location in string
+        self.target_file_type = "" # Recorded file extension
+        self.playing_file = None # File for Pydub
+        
+    # Basic functions
+    def getFileExtension(target_file_location:str):
+        extensionName:str = ""
+		# For loop into every characters of the string
+        fileExtensionStartLocation = target_file_location.find(".")
+        extensionName = target_file_location[fileExtensionStartLocation+1:]
+        print(extensionName)
+        return extensionName
+    
+    # Non Basic functions
+    def openFile(self, file_location:str, uploadToPydub:bool = True):
+        "Open the target file in the file location of this class. System will automatically override the current file"
+        # Apply the file location
+        self.target_media_file_location = file_location
+        # Identify the file extenstion
+        self.target_file_type = self.getFileExtension(self.target_media_file_location)
+        # Open the file and apply to a variable
+        self.target_media_file = open(self.target_media_file_location, "rb")
+        # Upload the file to Pydub
+        if (uploadToPydub == True):
+            self.playing_file = pydub.AudioSegment.from_file(self.target_media_file)
+        
+    def closeFile(self):
+        "Close the target file in the class."
+        # Close and reset the identities
+        self.target_media_file.close()
+        self.target_media_file_location = ""
+        self.target_file_type = ""
+        
+    def playMusicFromFile(self):
+        "Start the play the music from the file in the class"
+        # Open the file with pydub
+        play(self.playing_file)
+
+
 class PageEvent(playerWindow):
     def __init__(self, parent):
         playerWindow.__init__(self, parent)
+        self.Player = Player
         
     def openAbout(self, event):
         try:
@@ -201,9 +254,17 @@ class PageEvent(playerWindow):
             os.system("python3 about.py")
             return
         
-
+    def openMusicFile(self, event):
+        try:
+            fileLocation = filedialog.askopenfilename(filetypes=[("MP3 Media File", "*.mp3"), ("WAV Media File", "*.wav")])
+            fileExtention = self.Player.getFileExtension(fileLocation)
+            messagebox.showinfo("File type test", fileLocation+"|"+fileExtention)
+        except:
+            messagebox.showerror("Open file error", "Mineatory cannot open the file that you specific.")
 
 if (__name__ == "__main__"):
+    root = Tk()
+    root.withdraw()
     app = wx.App(False)
     page = PageEvent(None)
     page.Show(True)
