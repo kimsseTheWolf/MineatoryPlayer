@@ -442,6 +442,7 @@
                                 <property name="window_name"></property>
                                 <property name="window_style"></property>
                                 <event name="OnEnterWindow">refreshQuene</event>
+                                <event name="OnListBoxDClick">selectAndPlayFile</event>
                             </object>
                         </object>
                         <object class="sizeritem" expanded="0">
