@@ -237,6 +237,7 @@ import pydub
 import pygame
 import _thread
 import librosa
+import time
 from pydub.playback import play
 from tkinter import *
 from tkinter import filedialog
@@ -253,6 +254,7 @@ class Player():
         self.file_length = 0
         self.playing_position = 0
         self.play_percent = 0
+        self.pygameSoundModule = pygame.mixer
         
     # Basic functions
     def getFileExtension(self, target_file_location:str):
@@ -264,7 +266,7 @@ class Player():
         return extensionName
     
     def getMediaFileLength(self):
-        self.file_length = librosa.get_duration(filename=self.target_media_file_location) * 1000
+        self.file_length = librosa.get_duration(filename=self.target_media_file_location) *1000
         print(self.file_length)
     
     # Non Basic functions
@@ -277,7 +279,7 @@ class Player():
         # Get the file length for the file
         self.getMediaFileLength()
         # Initialize the pygame audio player
-        pygame.mixer.init()
+        self.pygameSoundModule.init()
         
     def closeFile(self):
         "Close the target file in the class."
@@ -292,42 +294,45 @@ class Player():
         
     def playMusicFromFile(self):
         "Start the play the music from the file in the class"
-        pygame.mixer.music.load(self.target_media_file_location)
-        pygame.mixer.music.set_volume(self.volume)
-        pygame.mixer.music.play()
+        self.pygameSoundModule.music.load(self.target_media_file_location)
+        self.pygameSoundModule.music.set_volume(self.volume)
+        self.pygameSoundModule.music.play()
 
-        while (pygame.mixer.music.get_busy):
-            pygame.mixer.music.set_volume(self.volume)
-            print(pygame.mixer.music.get_pos())
-            self.playing_position = pygame.mixer.music.get_pos()
+        while (self.pygameSoundModule.music.get_busy):
+            self.pygameSoundModule.music.set_volume(self.volume)
+            # print(self.pygameSoundModule.music.get_pos()/self.file_length)
+            self.play_percent = self.pygameSoundModule.music.get_pos()/self.file_length
+            # self.playing_position = self.pygameSoundModule.music.get_pos()/self.file_length
             pass
         
         return
     
     def pause(self):
-        pygame.mixer.music.pause()
+        self.pygameSoundModule.music.pause()
         
     def resume(self):
-        pygame.mixer.music.unpause()
+        self.pygameSoundModule.music.unpause()
         
     def end(self):
-        pygame.mixer.music.stop()
+        self.pygameSoundModule.music.stop()
         
     def goFront(self):
-        try:
-            pygame.mixer.music.set_pos(float(pygame.mixer.music.get_pos() - 5))
-            pass
-        except:
-            print("Error")
-            pass
+        pass
+        # try:
+        #     pygame.mixer.music.set_pos(float(pygame.mixer.music.get_pos() - 5))
+        #     pass
+        # except:
+        #     print("Error")
+        #     pass
         
     def goBack(self):
-        try:
-            pygame.mixer.music.set_pos(float(pygame.mixer.music.get_pos() + 5))
-            pass
-        except:
-            print("Error")
-            pass
+        pass
+        # try:
+        #     pygame.mixer.music.set_pos(float(pygame.mixer.music.get_pos() + 5))
+        #     pass
+        # except:
+        #     print("Error")
+        #     pass
 
 
 class PageEvent(playerWindow):
@@ -400,9 +405,16 @@ class PageEvent(playerWindow):
                 continue
             
     def updateProgressIndicator(self):
-        while (pygame.mixer.music.get_busy()):
-            self.slider_progressDisplay.SetValue(self.Player.play_percent * 100)
+        print("Triggered")
+        time.sleep(0.5)
+        print(self.Player.pygameSoundModule.music.get_busy())
+        while (self.Player.pygameSoundModule.music.get_busy()):
+            print(self.Player.play_percent * 100)
+            self.slider_progressDisplay.SetValue(int(self.Player.play_percent * 100))
             print("Updating")
+            
+        self.slider_progressDisplay.SetValue(0)
+        return
     
     def selectAndPlayFile(self, event):
         # Gather the selection from the list
@@ -432,6 +444,7 @@ class PageEvent(playerWindow):
         self.Player.volume = apply_v
         
     def resumePlaying(self, event):
+        player_progress_update = _thread.start_new_thread(self.updateProgressIndicator, ())
         self.Player.resume()
         
     def pausePlaying(self, event):
