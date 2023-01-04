@@ -326,6 +326,9 @@ class PageEvent(playerWindow):
         self.label_songTitle.SetLabel(title)
         
     def openAbout(self, event):
+        about_thread_num = _thread.start_new_thread(self._openAbout, ())
+        
+    def _openAbout(self):
         try:
             os.system("python about.py")
             return
