@@ -236,6 +236,7 @@ import os
 import pydub
 import pygame
 import _thread
+import librosa
 from pydub.playback import play
 from tkinter import *
 from tkinter import filedialog
@@ -249,6 +250,9 @@ class Player():
         self.target_file_type = "" # Recorded file extension
         self.playing_file = None # File for Pydub
         self.volume = 0.5
+        self.file_length = 0
+        self.playing_position = 0
+        self.play_percent = 0
         
     # Basic functions
     def getFileExtension(self, target_file_location:str):
@@ -259,6 +263,10 @@ class Player():
         print(extensionName)
         return extensionName
     
+    def getMediaFileLength(self):
+        self.file_length = librosa.get_duration(filename=self.target_media_file_location) * 1000
+        print(self.file_length)
+    
     # Non Basic functions
     def openFile(self, file_location:str):
         "Open the target file in the file location of this class. System will automatically override the current file"
@@ -266,6 +274,8 @@ class Player():
         self.target_media_file_location = file_location
         # Identify the file extenstion
         self.target_file_type = self.getFileExtension(self.target_media_file_location)
+        # Get the file length for the file
+        self.getMediaFileLength()
         # Initialize the pygame audio player
         pygame.mixer.init()
         
@@ -276,6 +286,10 @@ class Player():
         self.target_media_file_location = ""
         self.target_file_type = ""
         
+    def calculatePlayingPercent(self):
+        actualPercent = self.playing_position / self.file_length
+        self.play_percent = round(actualPercent, 2)
+        
     def playMusicFromFile(self):
         "Start the play the music from the file in the class"
         pygame.mixer.music.load(self.target_media_file_location)
@@ -284,7 +298,8 @@ class Player():
 
         while (pygame.mixer.music.get_busy):
             pygame.mixer.music.set_volume(self.volume)
-            # print(pygame.mixer.music.get_pos)
+            print(pygame.mixer.music.get_pos())
+            self.playing_position = pygame.mixer.music.get_pos()
             pass
         
         return
@@ -383,6 +398,11 @@ class PageEvent(playerWindow):
                 break
             else:
                 continue
+            
+    def updateProgressIndicator(self):
+        while (pygame.mixer.music.get_busy()):
+            self.slider_progressDisplay.SetValue(self.Player.play_percent * 100)
+            print("Updating")
     
     def selectAndPlayFile(self, event):
         # Gather the selection from the list
@@ -401,6 +421,7 @@ class PageEvent(playerWindow):
         self.Player.openFile(file_location=selected_song_location)
         # Create a thread to play music
         player_thread_num = _thread.start_new_thread(self.Player.playMusicFromFile, ())
+        player_progress_update = _thread.start_new_thread(self.updateProgressIndicator, ())
         # Set the song title
         self.label_songTitle.SetLabel(selected_song_name)
 
