@@ -184,6 +184,15 @@ class playerWindow ( wx.Frame ):
 		self.btn_deleteSong.Bind( wx.EVT_BUTTON, self.deleteSelectedSong )
 		self.Bind( wx.EVT_MENU, self.openMusicFile, id = self.menu_file_open.GetId() )
 		self.list_playList.Bind( wx.EVT_LISTBOX_DCLICK, self.selectAndPlayFile )
+		self.slider_volume.Bind( wx.EVT_SCROLL, self.setAndApplyVolume )
+		self.btn_play.Bind( wx.EVT_BUTTON, self.resumePlaying )
+		self.btn_pause.Bind( wx.EVT_BUTTON, self.pausePlaying )
+		self.Bind( wx.EVT_MENU, self.pausePlaying, id = self.menu_play_pause.GetId() )
+		self.Bind( wx.EVT_MENU, self.endMusic, id = self.menu_play_end.GetId() )
+		self.Bind( wx.EVT_MENU, self.goFront, id = self.menu_play_front.GetId() )
+		self.Bind( wx.EVT_MENU, self.goBack, id = self.menu_play_back.GetId() )
+		self.btn_back.Bind( wx.EVT_BUTTON, self.goFront )
+		self.btn_front.Bind( wx.EVT_BUTTON, self.goBack )
   
 	def __del__( self ):
 		pass
@@ -203,6 +212,24 @@ class playerWindow ( wx.Frame ):
   
 	def selectAndPlayFile( self, event ):
 		event.Skip()
+  
+	def setAndApplyVolume( self, event ):
+		event.Skip()
+	
+	def pausePlaying( self, event ):
+		event.Skip()
+  
+	def resumePlaying( self, event ):
+		event.Skip()
+  
+	def endMusic( self, event ):
+		event.Skip()
+  
+	def goFront( self, event ):
+		event.Skip()
+  
+	def goBack( self, event ):
+		event.Skip()
 
 
 import os
@@ -221,6 +248,7 @@ class Player():
         self.target_media_file_location = "" # File location in string
         self.target_file_type = "" # Recorded file extension
         self.playing_file = None # File for Pydub
+        self.volume = 0.5
         
     # Basic functions
     def getFileExtension(self, target_file_location:str):
@@ -232,22 +260,14 @@ class Player():
         return extensionName
     
     # Non Basic functions
-    def openFile(self, file_location:str, uploadToPydub:bool = True):
+    def openFile(self, file_location:str):
         "Open the target file in the file location of this class. System will automatically override the current file"
         # Apply the file location
         self.target_media_file_location = file_location
         # Identify the file extenstion
         self.target_file_type = self.getFileExtension(self.target_media_file_location)
-        # Open the file and apply to a variable
-        self.target_media_file = open(self.target_media_file_location, "rb")
-        # Upload the file to Pydub
-        if (uploadToPydub == True):
-            self.playing_file = pydub.AudioSegment.from_file(self.target_media_file_location, format=self.target_file_type)
-        print("The target file has already opened")
-        print(self.target_media_file)
-        print(self.target_media_file_location)
-        print(self.target_file_type)
-        print(self.playing_file)
+        # Initialize the pygame audio player
+        pygame.mixer.init()
         
     def closeFile(self):
         "Close the target file in the class."
@@ -258,12 +278,41 @@ class Player():
         
     def playMusicFromFile(self):
         "Start the play the music from the file in the class"
-        # Open the file with pydub
-        play(self.playing_file)
-        # Set the title to the file name
-        # self.label_songTitle.SetLabel(os.path.basename(self.target_media_file_location))
-        print("The file is playing")
+        pygame.mixer.music.load(self.target_media_file_location)
+        pygame.mixer.music.set_volume(self.volume)
+        pygame.mixer.music.play()
+
+        while (pygame.mixer.music.get_busy):
+            pygame.mixer.music.set_volume(self.volume)
+            # print(pygame.mixer.music.get_pos)
+            pass
+        
         return
+    
+    def pause(self):
+        pygame.mixer.music.pause()
+        
+    def resume(self):
+        pygame.mixer.music.unpause()
+        
+    def end(self):
+        pygame.mixer.music.stop()
+        
+    def goFront(self):
+        try:
+            pygame.mixer.music.set_pos(float(pygame.mixer.music.get_pos() - 5))
+            pass
+        except:
+            print("Error")
+            pass
+        
+    def goBack(self):
+        try:
+            pygame.mixer.music.set_pos(float(pygame.mixer.music.get_pos() + 5))
+            pass
+        except:
+            print("Error")
+            pass
 
 
 class PageEvent(playerWindow):
@@ -346,10 +395,32 @@ class PageEvent(playerWindow):
                 continue
         
         # Open the file
-        self.Player.openFile(file_location=selected_song_location, uploadToPydub=True)
+        self.Player.openFile(file_location=selected_song_location)
         # Create a thread to play music
         player_thread_num = _thread.start_new_thread(self.Player.playMusicFromFile, ())
-        # self.Player.playMusicFromFile()
+        # Set the song title
+        self.label_songTitle.SetLabel(selected_song_name)
+
+    def setAndApplyVolume(self, event):
+        # Gather the current value
+        current_v = self.slider_volume.GetValue()
+        apply_v = current_v / 100
+        self.Player.volume = apply_v
+        
+    def resumePlaying(self, event):
+        self.Player.resume()
+        
+    def pausePlaying(self, event):
+        self.Player.pause()
+        
+    def endMusic(self, event):
+        self.Player.end()
+        
+    def goFront(self, event):
+        self.Player.goFront()
+        
+    def goBack(self, event):
+        self.Player.goBack()
         
 if (__name__ == "__main__"):
     root = Tk()
